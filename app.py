@@ -1,28 +1,43 @@
-# Plotly Dash Course - Session 4 - Part 1 - Layout
-# Dash Bootstrap Components
+# Plotly Dash Course - Session 4 - Part 2 -> State
+# State Callbacks
 
-# KeyWords SizeScreen Behavior -> xs, sm, md, lg, xl, xxl
+from dash import Dash, html, dash_table, dcc, callback, Output, Input
+import pandas as pd
+import plotly.express as px
+import dash_ag_grid as dag
 
-from dash import Dash, html
-import dash_bootstrap_components as dbc
+# Incorporate data
+df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv')
 
-app = Dash(
-    external_stylesheets=[dbc.themes.CYBORG]
-)
+# Plotly graphs
+fig = px.histogram(df, x='continent', y='pop', histfunc='avg')
 
-app.layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(dbc.Alert("One of three columns"), width=4),
-        dbc.Col(dbc.Alert("2nd of three columns"), width=4),
-        dbc.Col(dbc.Alert("3rd of three columns"), width=4)
-    ]),
-    dbc.Row([
-        dbc.Col(dbc.Alert("One of four columns"), width=6, lg=3, md=2),
-        dbc.Col(dbc.Alert("2nd of four columns"), width=6, lg=3, md =2),
-        dbc.Col(dbc.Alert("3rd of four columns"), width=6, lg=3, md=2),
-        dbc.Col(dbc.Alert("4th of four columns"), width=6, lg=3, md=2)
-    ])
+# Initialize the app
+app = Dash(__name__)
+
+# App layout
+app.layout = html.Div([
+    html.Div(children='My First App with Data, Graph, and Controls'),
+    html.Hr(),
+    dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='column-options'),
+    dag.AgGrid(
+        id="grid",
+        rowData=df.to_dict("records"),
+        columnDefs=[{"field": i} for i in df.columns],
+    ),
+    dcc.Graph(figure=fig, id='graph1')
 ])
 
-if __name__ == "__main__":
+# Add controls to build the interaction
+@callback(
+    Output(component_id='graph1', component_property='figure'),
+    Input(component_id='column-options', component_property='value')
+)
+def update_graph(col_chosen):
+    fig = px.histogram(df, x='continent', y=col_chosen, histfunc='avg')
+    return fig
+
+
+# Run the app
+if __name__ == '__main__':
     app.run(debug=True)
