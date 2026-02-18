@@ -14,6 +14,7 @@ fig = px.histogram(df, x='continent', y='pop', histfunc='avg')
 
 # Initialize the app
 app = Dash(__name__)
+server = app.server
 
 # App layout
 app.layout = html.Div([
