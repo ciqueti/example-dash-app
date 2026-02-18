@@ -1,4 +1,4 @@
-# Plotly Dash Course - Session 4 - Part 4 -> State and no_update
+# Plotly Dash Course - Session 4 -> State, no_update, Prevent Initial Call, Duplicate Outputs
 # State Callbacks -> Let's assume we want multiples components to be selected (dropdown, radio-button, date-picker) before updating the graph (activate the callback)
 
 from dash import Dash, html, dcc, callback, Input, Output, State, no_update
@@ -42,6 +42,7 @@ app.layout = dbc.Container([
     Input(component_id='my-button', component_property='n_clicks'),
     State(component_id='yaxis-options', component_property='value'),
     State(component_id='xaxis-options', component_property='value'),
+    prevent_initial_call=True
     
 )
 def update_graph(_, y_chosen, x_chosen):
@@ -50,6 +51,16 @@ def update_graph(_, y_chosen, x_chosen):
     else:
         fig = px.histogram(df, x=x_chosen, y=y_chosen, histfunc='avg')
         return fig, no_update
+
+@callback(
+    Output(component_id="graph1", component_property="figure", allow_duplicate=True),
+    Input(component_id="my-dropdown", component_property="value"),
+    prevent_initial_call=True
+)
+
+def update_graph_color(color_chosen):
+    fig = px.histogram(...)
+    return fig
 
 
 # Run the app
