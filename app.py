@@ -1,65 +1,40 @@
-# Plotly Dash Course - Session 4 -> State, no_update, Prevent Initial Call, Duplicate Outputs
-# State Callbacks -> Let's assume we want multiples components to be selected (dropdown, radio-button, date-picker) before updating the graph (activate the callback)
+# Plotly Dash Course - Session 5 -> How to Deploy a Dash App - Setup
 
-from dash import Dash, html, dcc, callback, Input, Output, State, no_update
-import dash_bootstrap_components as dbc
+
+from dash import Dash, html, dash_table, dcc, callback, Output, Input
 import pandas as pd
 import plotly.express as px
+import dash_ag_grid as dag
 
 # Incorporate data
 df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv')
 
+# Plotly graphs
+fig = px.histogram(df, x='continent', y='pop', histfunc='avg')
+
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.SOLAR])
+app = Dash(__name__)
 
 # App layout
-app.layout = dbc.Container([
-    html.H1(children='Country Analysis'),
+app.layout = html.Div([
+    html.Div(children='My First App with Data, Graph, and Controls'),
     html.Hr(),
-    dbc.Alert(id='app-alert', is_open=False, duration=3000, children='Try a different combination please!'),
-    
-    dbc.Row([
-        dbc.Col([
-            dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='yaxis-options'),   
-        ], width=6),
-        dbc.Col([
-            dcc.Dropdown(options=['country', 'continent'], value='continent', id='xaxis-options'),  
-            dbc.Button('Submit', id='my-button', n_clicks=0)
-        ], width=6)
-    ], className='mb-3'),
-
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(figure={}, id='graph1')
-        ], width=12)
-    ]),
+    dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='column-options'),
+    dag.AgGrid(
+        id="grid",
+        rowData=df.to_dict("records"),
+        columnDefs=[{"field": i} for i in df.columns],
+    ),
+    dcc.Graph(figure=fig, id='graph1')
 ])
 
 # Add controls to build the interaction
 @callback(
     Output(component_id='graph1', component_property='figure'),
-    Output(component_id='app-alert', component_property='is_open'),
-    Input(component_id='my-button', component_property='n_clicks'),
-    State(component_id='yaxis-options', component_property='value'),
-    State(component_id='xaxis-options', component_property='value'),
-    prevent_initial_call=True
-    
+    Input(component_id='column-options', component_property='value')
 )
-def update_graph(_, y_chosen, x_chosen):
-    if y_chosen=='pop' and x_chosen=='country':
-        return no_update, True
-    else:
-        fig = px.histogram(df, x=x_chosen, y=y_chosen, histfunc='avg')
-        return fig, no_update
-
-@callback(
-    Output(component_id="graph1", component_property="figure", allow_duplicate=True),
-    Input(component_id="my-dropdown", component_property="value"),
-    prevent_initial_call=True
-)
-
-def update_graph_color(color_chosen):
-    fig = px.histogram(...)
+def update_graph(col_chosen):
+    fig = px.histogram(df, x='continent', y=col_chosen, histfunc='avg')
     return fig
 
 
