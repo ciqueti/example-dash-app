@@ -1,4 +1,4 @@
-# Plotly Dash Course - Session 4 - Part 2 -> State
+# Plotly Dash Course - Session 4 - Part 4 -> State and no_update
 # State Callbacks -> Let's assume we want multiples components to be selected (dropdown, radio-button, date-picker) before updating the graph (activate the callback)
 
 from dash import Dash, html, dcc, callback, Input, Output, State, no_update
@@ -16,17 +16,17 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.SOLAR])
 app.layout = dbc.Container([
     html.H1(children='Country Analysis'),
     html.Hr(),
+    dbc.Alert(id='app-alert', is_open=False, duration=3000, children='Try a different combination please!'),
     
     dbc.Row([
         dbc.Col([
             dcc.RadioItems(options=['pop', 'lifeExp', 'gdpPercap'], value='lifeExp', id='yaxis-options'),   
         ], width=6),
         dbc.Col([
-            dcc.Dropdown(options=['country', 'continent'], value='continent', id='xaxis-options'),    
+            dcc.Dropdown(options=['country', 'continent'], value='continent', id='xaxis-options'),  
+            dbc.Button('Submit', id='my-button', n_clicks=0)
         ], width=6)
     ], className='mb-3'),
-
-    dbc.Button("Submit", id="my-button", n_clicks=0),
 
     dbc.Row([
         dbc.Col([
@@ -38,14 +38,18 @@ app.layout = dbc.Container([
 # Add controls to build the interaction
 @callback(
     Output(component_id='graph1', component_property='figure'),
-    Input(component_id="my-button", component_property="n_clicks"),
+    Output(component_id='app-alert', component_property='is_open'),
+    Input(component_id='my-button', component_property='n_clicks'),
     State(component_id='yaxis-options', component_property='value'),
     State(component_id='xaxis-options', component_property='value'),
     
 )
 def update_graph(_, y_chosen, x_chosen):
-    fig = px.histogram(df, x=x_chosen, y=y_chosen, histfunc='avg')
-    return fig
+    if y_chosen=='pop' and x_chosen=='country':
+        return no_update, True
+    else:
+        fig = px.histogram(df, x=x_chosen, y=y_chosen, histfunc='avg')
+        return fig, no_update
 
 
 # Run the app
